@@ -6,6 +6,7 @@ import React, { useEffect, useState } from "react";
 import { Brand, DataroomBrand } from "@prisma/client";
 import {
   ArrowUpRight,
+  BadgeInfoIcon,
   Download,
   MessageCircle,
   Slash,
@@ -55,10 +56,10 @@ export type TNavData = {
   viewerId?: string;
   isMobile?: boolean;
   isPreview?: boolean;
-
   dataroomId?: string;
   conversationsEnabled?: boolean;
   assistantEnabled?: boolean;
+  isTeamMember?: boolean;
 };
 
 export default function Nav({
@@ -97,6 +98,7 @@ export default function Nav({
     dataroomId,
     conversationsEnabled,
     assistantEnabled,
+    isTeamMember,
   } = navData;
 
   const [showConversations, setShowConversations] = useState(false);
@@ -121,27 +123,38 @@ export default function Nav({
         body: JSON.stringify({ linkId, viewId }),
       });
 
+      if (!response.ok) {
+        toast.error("Error downloading file");
+        return;
+      }
+
       if (hasWatermark) {
         const pdfBlob = await response.blob();
-        const blobUrl = URL.createObjectURL(pdfBlob);
+        const blobUrl = window.URL.createObjectURL(pdfBlob);
 
-        const a = document.createElement("a");
-        a.href = blobUrl;
-        a.download = "watermarked_document.pdf";
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
+        const link = document.createElement("a");
+        link.href = blobUrl;
+        link.rel = "noopener noreferrer";
+        link.download = "watermarked_document.pdf";
+        document.body.appendChild(link);
+        link.click();
 
-        // Clean up the Blob URL
-        URL.revokeObjectURL(blobUrl);
+        setTimeout(() => {
+          window.URL.revokeObjectURL(blobUrl);
+          document.body.removeChild(link);
+        }, 100);
       } else {
-        if (!response.ok) {
-          toast.error("Error downloading file");
-          return;
-        }
         const { downloadUrl } = await response.json();
 
-        window.open(downloadUrl, "_blank");
+        const link = document.createElement("a");
+        link.href = downloadUrl;
+        link.rel = "noopener noreferrer";
+        document.body.appendChild(link);
+        link.click();
+
+        setTimeout(() => {
+          document.body.removeChild(link);
+        }, 100);
       }
     } catch (error) {
       console.error("Error downloading file:", error);
@@ -237,9 +250,29 @@ export default function Nav({
             ) : null}
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center space-x-2 pr-2 sm:static sm:inset-auto sm:ml-6 sm:space-x-4 sm:pr-0">
+            {isTeamMember && (
+              <TooltipProvider delayDuration={100}>
+                <Tooltip defaultOpen>
+                  <TooltipTrigger asChild>
+                    <Button
+                      className="size-8 bg-gray-900 text-white hover:bg-gray-900/80 sm:size-10"
+                      size="icon"
+                    >
+                      <BadgeInfoIcon className="h-5 w-5" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="max-w-xs text-wrap text-center">
+                      Skipped verification because you are a team member; no
+                      analytics will be collected
+                    </p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )}
             {/* Conversation toggle button for dataroom documents */}
             {isDataroom && conversationsEnabled && (
-              <TooltipProvider>
+              <TooltipProvider delayDuration={100}>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button

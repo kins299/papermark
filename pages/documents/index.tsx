@@ -1,14 +1,15 @@
+import { useRouter } from "next/router";
+
 import { useTeam } from "@/context/team-context";
 import { FolderPlusIcon, PlusIcon } from "lucide-react";
 
-import { useRouter } from "next/router";
 import useDocuments, { useRootFolders } from "@/lib/swr/use-documents";
 import { handleInvitationStatus } from "@/lib/utils";
 
 import { AddDocumentModal } from "@/components/documents/add-document-modal";
 import { DocumentsList } from "@/components/documents/documents-list";
-import { DocumentsPagination } from "@/components/documents/documents-pagination";
 import SortButton from "@/components/documents/filters/sort-button";
+import { Pagination } from "@/components/documents/pagination";
 import { AddFolderModal } from "@/components/folders/add-folder-modal";
 import AppLayout from "@/components/layouts/app";
 import { SearchBoxPersisted } from "@/components/search-box";
@@ -28,19 +29,22 @@ export default function Documents() {
     handleInvitationStatus(invitation, queryParams, router);
   }
 
-  const { folders } = useRootFolders();
-  const { documents, pagination, isValidating, isFiltered } = useDocuments();
+  const { folders, loading: foldersLoading } = useRootFolders();
+  const { documents, pagination, isValidating, isFiltered, loading } =
+    useDocuments();
 
   const updatePagination = (newPage?: number, newPageSize?: number) => {
     const params = new URLSearchParams(window.location.search);
-    
+
     if (newPage) params.set("page", newPage.toString());
     if (newPageSize) {
       params.set("limit", newPageSize.toString());
       params.set("page", "1");
     }
-    
-    router.push(`/documents?${params.toString()}`, undefined, { shallow: true });
+
+    router.push(`/documents?${params.toString()}`, undefined, {
+      shallow: true,
+    });
   };
 
   const displayFolders = isFiltered ? [] : folders;
@@ -97,17 +101,20 @@ export default function Documents() {
           documents={documents}
           folders={displayFolders}
           teamInfo={teamInfo}
+          loading={loading}
+          foldersLoading={foldersLoading}
         />
 
         {isFiltered && pagination && (
-          <DocumentsPagination
+          <Pagination
             currentPage={currentPage}
             pageSize={pageSize}
-            totalDocuments={pagination.total}
-            totalShownDocuments={documents.length}
+            totalItems={pagination.total}
+            totalShownItems={documents.length}
             totalPages={pagination.pages}
             onPageChange={updatePagination}
             onPageSizeChange={(size) => updatePagination(undefined, size)}
+            itemName="documents"
           />
         )}
       </div>

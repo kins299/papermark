@@ -29,6 +29,7 @@ export interface DocumentWithLinksAndLinkCountAndViewCount extends Document {
     links: number;
     views: number;
     versions: number;
+    datarooms: number;
   };
   links: Link[];
   folder: {
@@ -44,6 +45,17 @@ export interface DocumentWithVersion extends Document {
     name: string;
     path: string;
   };
+  datarooms: {
+    dataroom: {
+      id: string;
+      name: string;
+    };
+    folder: {
+      id: string;
+      name: string;
+      path: string;
+    };
+  }[];
   hasPageLinks: boolean;
 }
 
@@ -54,6 +66,7 @@ export interface LinkWithViews extends Link {
   views: View[];
   feedback: { id: true; data: { question: string; type: string } } | null;
   customFields: CustomField[];
+  tags: TagProps[];
   uploadFolderName: string | undefined;
 }
 
@@ -118,6 +131,7 @@ export interface LinkWithDataroom extends Link {
     documents: {
       id: string;
       folderId: string | null;
+      updatedAt: Date;
       orderIndex: number | null;
       document: {
         id: string;
@@ -129,6 +143,7 @@ export interface LinkWithDataroom extends Link {
           hasPages: boolean;
           file: string;
           isVertical: boolean;
+          updatedAt: Date;
         }[];
       };
     }[];
@@ -141,6 +156,7 @@ export interface LinkWithDataroom extends Link {
   };
   agreement: Agreement | null;
   customFields: CustomField[];
+  enableIndexFile: boolean;
 }
 
 export interface Geo {
@@ -288,6 +304,7 @@ export interface Team {
   logo?: React.ElementType;
   plan?: string;
   createdAt?: Date;
+  enableExcelAdvancedMode?: boolean;
 }
 
 export interface TeamDetail {
@@ -349,3 +366,31 @@ export type BasePlan =
   | "datarooms"
   | "datarooms-plus"
   | "enterprise";
+
+export const tagColors = [
+  "red",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+  "pink",
+  "slate",
+  "fuchsia",
+] as const;
+
+export type TagColorProps = (typeof tagColors)[number];
+
+export interface TagsWithTotalCount {
+  tags: TagProps[];
+  totalCount: number;
+}
+
+export interface TagProps {
+  id: string;
+  name: string;
+  description: string | null;
+  color: TagColorProps | string;
+  _count?: {
+    items: number;
+  };
+}
